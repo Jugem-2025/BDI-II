@@ -2,103 +2,124 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>体調管理チェックリスト</title>
   <style>
-    /* リセット＆ベース */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing:border-box; margin:0; padding:0; }
     body {
-      font-family: sans-serif;
-      line-height: 1.6;
-      padding: 1rem;
-      background: #fafafa;
+      font-family:sans-serif;
+      line-height:1.6;
+      background:#fafafa;
+      padding:1rem;
+      padding-bottom:6rem; /* フッター用余白 */
     }
     h1 {
-      text-align: center;
-      margin-bottom: 1rem;
-      font-size: 1.4rem;
+      text-align:center;
+      margin-bottom:1rem;
+      font-size:1.4rem;
     }
     .history-link {
-      text-align: right;
-      margin-bottom: 0.5rem;
+      text-align:right;
+      margin-bottom:0.5rem;
     }
     .history-link a {
-      color: #007acc;
-      text-decoration: none;
-      font-size: 0.9rem;
+      color:#007acc;
+      text-decoration:none;
+      font-size:0.9rem;
     }
     .history-link a:hover {
-      text-decoration: underline;
+      text-decoration:underline;
     }
 
     /* 質問カード */
     fieldset.question {
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      margin-bottom: 1rem;
-      padding: 0.75rem;
-      background: #fff;
+      border:1px solid #ddd;
+      border-radius:8px;
+      margin-bottom:1rem;
+      padding:0.75rem;
+      background:#fff;
     }
     fieldset.question legend {
-      font-weight: bold;
-      margin-bottom: 0.5rem;
-      padding: 0 0.5rem;
+      font-weight:bold;
+      margin-bottom:0.5rem;
+      padding:0 0.5rem;
     }
     .options label {
-      display: flex;
-      align-items: center;
-      padding: 0.75rem;
-      margin-bottom: 0.5rem;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      background: #fdfdfd;
-      cursor: pointer;
-      transition: background 0.2s, border-color 0.2s;
+      display:flex;
+      align-items:center;
+      padding:0.75rem;
+      margin-bottom:0.5rem;
+      border:1px solid #ddd;
+      border-radius:6px;
+      background:#fdfdfd;
+      cursor:pointer;
+      transition:background 0.2s, border-color 0.2s;
     }
-    .options label:last-child { margin-bottom: 0; }
+    .options label:last-child { margin-bottom:0; }
     .options input[type="radio"] {
-      margin-right: 0.75rem;
-      transform: scale(1.3);
-      accent-color: #007acc;
+      margin-right:0.75rem;
+      transform:scale(1.3);
+      accent-color:#007acc;
     }
     .options input[type="radio"]:checked + span {
-      font-weight: bold;
-      color: #007acc;
+      font-weight:bold; color:#007acc;
     }
 
-    /* 合計＆アクション */
+    /* 合計＆内訳 */
     #total {
-      text-align: right;
-      font-size: 1.1rem;
-      font-weight: bold;
-      margin: 1rem 0;
+      text-align:right;
+      font-size:1.1rem;
+      font-weight:bold;
+      margin:1rem 0;
+      cursor:pointer;
+      user-select:none;
     }
+    #detailList {
+      display:none;
+      margin-bottom:1rem;
+      padding-left:1rem;
+    }
+    #detailList li {
+      margin-bottom:0.25rem;
+      font-size:0.95rem;
+    }
+
+    /* 保存＆クリア */
     .actions {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
+      display:flex;
+      flex-direction:column;
+      gap:0.5rem;
     }
     .actions button {
-      width: 100%;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      padding: 0.75rem;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background 0.2s;
+      width:100%;
+      color:#fff;
+      border:none;
+      border-radius:6px;
+      padding:0.75rem;
+      font-size:1rem;
+      cursor:pointer;
+      transition:background 0.2s;
     }
     #saveBtn {
-      background: #28a745;
+      background:#28a745;
     }
     #saveBtn:hover {
-      background: #218838;
+      background:#218838;
     }
     #resetBtn {
-      background: #e74c3c;
+      background:#e74c3c;
     }
     #resetBtn:hover {
-      background: #c0392b;
+      background:#c0392b;
+    }
+
+    /* フッター固定 */
+    #footer {
+      position:fixed;
+      bottom:0; left:0; right:0;
+      background:#fff;
+      border-top:1px solid #ddd;
+      padding:0.75rem 1rem;
     }
   </style>
 </head>
@@ -110,7 +131,9 @@
   </div>
 
   <form id="checklist">
-    <!-- ==== 質問カードを q1 ～ q21 まで同様に並べる ==== -->
+
+    <!-- q1〜q21 を配列で定義して JS で自動レンダリングする方法もありますが、ここでは明示的に全部書きます -->
+
     <fieldset class="question">
       <legend>1. 悲しさ</legend>
       <div class="options">
@@ -124,70 +147,152 @@
     <fieldset class="question">
       <legend>2. 悲観</legend>
       <div class="options">
-        <label><input type="radio" name="q2" value="0"><span>悲観していない（0点）</span></label>
-        <label><input type="radio" name="q2" value="1"><span>以前より悲観的（1点）</span></label>
-        <label><input type="radio" name="q2" value="2"><span>うまくいくとは思えない（2点）</span></label>
-        <label><input type="radio" name="q2" value="3"><span>将来は絶望的（3点）</span></label>
+        <label><input type="radio" name="q2" value="0"><span>将来について悲観していない（0点）</span></label>
+        <label><input type="radio" name="q2" value="1"><span>以前より悲観的に感じる（1点）</span></label>
+        <label><input type="radio" name="q2" value="2"><span>物事が自分にうまくいくとは思えない（2点）</span></label>
+        <label><input type="radio" name="q2" value="3"><span>将来は絶望的で悪くなるばかりだ（3点）</span></label>
       </div>
     </fieldset>
 
-    <!-- 中略：q3～q21 も同様に -->
-    
-    <!-- 合計スコア -->
-    <div id="total">合計スコア：0</div>
+    <fieldset class="question">
+      <legend>3. 過去の失敗</legend>
+      <div class="options">
+        <label><input type="radio" name="q3" value="0"><span>自分を落伍者だとは思わない（0点）</span></label>
+        <label><input type="radio" name="q3" value="1"><span>普通の人より失敗が多かったと思う（1点）</span></label>
+        <label><input type="radio" name="q3" value="2"><span>人生を振り返ると失敗ばかり思い出す（2点）</span></label>
+        <label><input type="radio" name="q3" value="3"><span>自分は人間として完全な落伍者だと思う（3点）</span></label>
+      </div>
+    </fieldset>
 
-    <!-- 保存＆クリア -->
-    <div class="actions">
-      <button id="saveBtn" type="button">保存</button>
-      <button id="resetBtn" type="button">クリア</button>
-    </div>
-  </form>
+    <fieldset class="question">
+      <legend>4. 喜びの喪失</legend>
+      <div class="options">
+        <label><input type="radio" name="q4" value="0"><span>自分が楽しいことには以前と同じくらい喜びを感じる（0点）</span></label>
+        <label><input type="radio" name="q4" value="1"><span>以前ほど物事を楽しめない（1点）</span></label>
+        <label><input type="radio" name="q4" value="2"><span>以前は楽しめたことにもほとんど喜びを感じない（2点）</span></label>
+        <label><input type="radio" name="q4" value="3"><span>以前は楽しめたことにも全く喜びを感じない（3点）</span></label>
+      </div>
+    </fieldset>
 
-  <script>
-    const form = document.getElementById('checklist');
-    const totalEl = document.getElementById('total');
-    const saveBtn = document.getElementById('saveBtn');
-    const resetBtn = document.getElementById('resetBtn');
+    <fieldset class="question">
+      <legend>5. 罪責感</legend>
+      <div class="options">
+        <label><input type="radio" name="q5" value="0"><span>特に罪の意識はない（0点）</span></label>
+        <label><input type="radio" name="q5" value="1"><span>自分のしたことやすべきだったことに多くの罪悪感を感じる（1点）</span></label>
+        <label><input type="radio" name="q5" value="2"><span>ほとんど常に罪悪感を感じている（2点）</span></label>
+        <label><input type="radio" name="q5" value="3"><span>絶えず罪悪感を感じている（3点）</span></label>
+      </div>
+    </fieldset>
 
-    // 合計を計算して表示
-    function calculateTotal() {
-      let sum = 0;
-      for (let i = 1; i <= 21; i++) {
-        const sel = form.querySelector(`input[name="q${i}"]:checked`);
-        if (sel) sum += parseInt(sel.value, 10);
-      }
-      totalEl.textContent = `合計スコア：${sum}`;
-      return sum;
-    }
+    <fieldset class="question">
+      <legend>6. 被罰感</legend>
+      <div class="options">
+        <label><input type="radio" name="q6" value="0"><span>自分が罰を受けているようには感じない（0点）</span></label>
+        <label><input type="radio" name="q6" value="1"><span>自分は罰を受けるかもしれないと思う（1点）</span></label>
+        <label><input type="radio" name="q6" value="2"><span>自分は罰を受けるだろう（2点）</span></label>
+        <label><input type="radio" name="q6" value="3"><span>自分は今罰されていると感じる（3点）</span></label>
+      </div>
+    </fieldset>
 
-    // 全クリア
-    function resetAll() {
-      form.querySelectorAll('input[type="radio"]').forEach(inp => inp.checked = false);
-      calculateTotal();
-    }
+    <fieldset class="question">
+      <legend>7. 自己嫌悪</legend>
+      <div class="options">
+        <label><input type="radio" name="q7" value="0"><span>自分自身に対する意識は以前と変わらない（0点）</span></label>
+        <label><input type="radio" name="q7" value="1"><span>自分自身に対して自信を無くした（1点）</span></label>
+        <label><input type="radio" name="q7" value="2"><span>自分自身に失望している（2点）</span></label>
+        <label><input type="radio" name="q7" value="3"><span>自分自身が嫌でたまらない（3点）</span></label>
+      </div>
+    </fieldset>
 
-    // 保存
-    function saveRecord() {
-      const now = new Date().toLocaleString();
-      const record = { timestamp: now, scores: [], total: calculateTotal() };
-      for (let i = 1; i <= 21; i++) {
-        const sel = form.querySelector(`input[name="q${i}"]:checked`);
-        record.scores.push(sel ? parseInt(sel.value,10) : null);
-      }
-      const records = JSON.parse(localStorage.getItem('records')||'[]');
-      records.push(record);
-      localStorage.setItem('records', JSON.stringify(records));
-      alert('記録を保存しました');
-    }
+    <fieldset class="question">
+      <legend>8. 自己批判</legend>
+      <div class="options">
+        <label><input type="radio" name="q8" value="0"><span>以前より自分自身に批判的ということはない（0点）</span></label>
+        <label><input type="radio" name="q8" value="1"><span>以前より自分自身に批判的だ（1点）</span></label>
+        <label><input type="radio" name="q8" value="2"><span>あらゆる自分の欠点が気になり自分を責めている（2点）</span></label>
+        <label><input type="radio" name="q8" value="3"><span>何か悪いことが起こると、すべて自分のせいだと思う（3点）</span></label>
+      </div>
+    </fieldset>
 
-    // イベント登録
-    form.addEventListener('change', calculateTotal);
-    saveBtn.addEventListener('click', saveRecord);
-    resetBtn.addEventListener('click', resetAll);
+    <fieldset class="question">
+      <legend>9. 自殺念慮</legend>
+      <div class="options">
+        <label><input type="radio" name="q9" value="0"><span>自殺したいと思うことは全くない（0点）</span></label>
+        <label><input type="radio" name="q9" value="1"><span>自殺したいと思うことはあるが、本当にしようとは思わない（1点）</span></label>
+        <label><input type="radio" name="q9" value="2"><span>自殺したいと思う（2点）</span></label>
+        <label><input type="radio" name="q9" value="3"><span>機会があれば自殺するだろう（3点）</span></label>
+      </div>
+    </fieldset>
 
-    // 初期表示
-    calculateTotal();
-  </script>
+    <fieldset class="question">
+      <legend>10. 落涙</legend>
+      <div class="options">
+        <label><input type="radio" name="q10" value="0"><span>以前よりも涙もろいということはない（0点）</span></label>
+        <label><input type="radio" name="q10" value="1"><span>以前より涙もろい（1点）</span></label>
+        <label><input type="radio" name="q10" value="2"><span>どんなささいなことにも涙が出る（2点）</span></label>
+        <label><input type="radio" name="q10" value="3"><span>泣きたいと感じるのに涙が出ない（3点）</span></label>
+      </div>
+    </fieldset>
 
-</body>
-</html>
+    <fieldset class="question">
+      <legend>11. 激越</legend>
+      <div class="options">
+        <label><input type="radio" name="q11" value="0"><span>普段以上に落ち着きがなかったり緊張しやすくなはい（0点）</span></label>
+        <label><input type="radio" name="q11" value="1"><span>ときおり落ち着きがなかったり緊張しやすい（1点）</span></label>
+        <label><input type="radio" name="q11" value="2"><span>気持ちが落ち着かずじっとしているのが難しい（2点）</span></label>
+        <label><input type="radio" name="q11" value="3"><span>気持ちが落ち着かず絶えず動いたり何かしてないと気が済まない（3点）</span></label>
+      </div>
+    </fieldset>
+
+    <fieldset class="question">
+      <legend>12. 興味喪失</legend>
+      <div class="options">
+        <label><input type="radio" name="q12" value="0"><span>ほかの人や活動に対する関心を失ってはいない（0点）</span></label>
+        <label><input type="radio" name="q12" value="1"><span>以前よりほかの人や物事に対する関心が減った（1点）</span></label>
+        <label><input type="radio" name="q12" value="2"><span>他の人や物事への関心がほとんどなくなった（2点）</span></label>
+        <label><input type="radio" name="q12" value="3"><span>何事にも興味を持つことが難しい（3点）</span></label>
+      </div>
+    </fieldset>
+
+    <fieldset class="question">
+      <legend>13. 決断力低下</legend>
+      <div class="options">
+        <label><input type="radio" name="q13" value="0"><span>以前と同じように物事を決断できる（0点）</span></label>
+        <label><input type="radio" name="q13" value="1"><span>以前より決断するのが難しくなった（1点）</span></label>
+        <label><input type="radio" name="q13" value="2"><span>以前より決断するのがずっと難しくなった（2点）</span></label>
+        <label><input type="radio" name="q13" value="3"><span>どんなことを決めるにもひどく苦労する（3点）</span></label>
+      </div>
+    </fieldset>
+
+    <fieldset class="question">
+      <legend>14. 無価値感</legend>
+      <div class="options">
+        <label><input type="radio" name="q14" value="0"><span>自分に価値がないとは思わない（0点）</span></label>
+        <label><input type="radio" name="q14" value="1"><span>以前ほど価値があり人の役に立てる人間だとは思えない（1点）</span></label>
+        <label><input type="radio" name="q14" value="2"><span>ほかの人に比べて自分は価値がないと思う（2点）</span></label>
+        <label><input type="radio" name="q14" value="3"><span>自分は全く価値がないと思う（3点）</span></label>
+      </div>
+    </fieldset>
+
+    <fieldset class="question">
+      <legend>15. 活力喪失</legend>
+      <div class="options">
+        <label><input type="radio" name="q15" value="0"><span>以前と同じように活力がある（0点）</span></label>
+        <label><input type="radio" name="q15" value="1"><span>以前と比べて活力が減った（1点）</span></label>
+        <label><input type="radio" name="q15" value="2"><span>活力が足りなくて十分動けない（2点）</span></label>
+        <label><input type="radio" name="q15" value="3"><span>活力がなく何もできない（3点）</span></label>
+      </div>
+    </fieldset>
+
+    <fieldset class="question">
+      <legend>16. 睡眠習慣の変化</legend>
+      <div class="options">
+        <label><input type="radio" name="q16" value="0"><span>睡眠習慣に変わりはない（0点）</span></label>
+        <label><input type="radio" name="q16" value="1"><span>以前より少し睡眠時間が長い/短い（1点）</span></label>
+        <label><input type="radio" name="q16" value="2"><span>以前よりかなり睡眠時間が長い/短い（2点）</span></label>
+        <label><input type="radio" name="q16" value="3"><span>ほとんど１日中寝ている/以前より１〜２時間早く目が覚めて再び眠れない（3点）</span></label>
+      </div>
+    </fieldset>
+
+    <fieldset class="question">
+      <legend>17
