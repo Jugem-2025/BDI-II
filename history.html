@@ -1,104 +1,52 @@
+<!-- history.html -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>保存履歴一覧</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: sans-serif;
-      line-height: 1.6;
-      padding: 1rem;
-      background: #fafafa;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 1rem;
-      font-size: 1.4rem;
-    }
-    .record-list {
-      list-style: none;
-    }
-    details.record {
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      background: #fff;
-      margin-bottom: 0.75rem;
-      padding: 0.5rem;
-    }
-    details.record summary {
-      cursor: pointer;
-      font-weight: bold;
-    }
-    details.record ul {
-      margin-top: 0.5rem;
-      padding-left: 1.2rem;
-    }
-    details.record li {
-      margin-bottom: 0.3rem;
-      font-size: 0.95rem;
-    }
-    .no-records {
-      text-align: center;
-      margin-top: 2rem;
-      color: #888;
-    }
-    .back-link {
-      display: block;
-      text-align: center;
-      margin-top: 1.5rem;
-    }
-    .back-link a {
-      color: #007acc;
-      text-decoration: none;
-    }
-    .back-link a:hover {
-      text-decoration: underline;
-    }
+    body { font-family:sans-serif; padding:16px; }
+    h1 { text-align:center; margin-bottom:16px; }
+    details { margin-bottom:12px; border:1px solid #ccc; border-radius:4px; padding:8px; }
+    summary { font-weight:bold; cursor:pointer; }
+    ul { padding-left:20px; list-style:disc; }
+    a { display:inline-block; margin-top:16px; color:#007bff; text-decoration:none; }
+    a:hover { text-decoration:underline; }
   </style>
 </head>
 <body>
-
   <h1>保存履歴一覧</h1>
-  <ul class="record-list" id="recordList"></ul>
-  <div class="no-records" id="noRecords">保存された履歴はありません。</div>
-  <div class="back-link">
-    <a href="index.html">← 入力ページに戻る</a>
-  </div>
+  <div id="history-container"></div>
+  <a href="index.html">← 入力ページへ戻る</a>
 
   <script>
-    const recordList = document.getElementById('recordList');
-    const noRec = document.getElementById('noRecords');
-    const records = JSON.parse(localStorage.getItem('records')||'[]');
+    document.addEventListener('DOMContentLoaded', () => {
+      const container = document.getElementById('history-container');
+      const records = JSON.parse(localStorage.getItem('healthRecords') || '[]');
 
-    if (records.length === 0) {
-      noRec.style.display = 'block';
-    } else {
-      noRec.style.display = 'none';
-      // 保存順ではなく、直近が上に来るよう逆順で表示
-      records.slice().reverse().forEach(rec => {
+      if (records.length === 0) {
+        container.textContent = '保存された履歴はありません';
+        return;
+      }
+
+      // 逆順表示
+      records.reverse().forEach(rec => {
         const d = document.createElement('details');
-        d.className = 'record';
-        // summaryに日時＋合計
-        const sum = document.createElement('summary');
-        sum.textContent = `${rec.timestamp} — 合計スコア：${rec.total}点`;
-        d.appendChild(sum);
+        const summary = document.createElement('summary');
+        summary.textContent = `${rec.datetime}　合計スコア：${rec.total}点`;
+        d.appendChild(summary);
 
-        // 内訳リスト
         const ul = document.createElement('ul');
-        rec.scores.forEach((v, i) => {
+        rec.answers.forEach((v, i) => {
           const li = document.createElement('li');
-          const score = v === null ? '未選択' : `${v}点`;
-          li.textContent = `${i + 1}. 質問${i + 1}: ${score}`;
+          li.textContent = `${i+1}: ${v===null? '未選択' : v}`;
           ul.appendChild(li);
         });
         d.appendChild(ul);
-
-        recordList.appendChild(d);
+        container.appendChild(d);
       });
-    }
+    });
   </script>
-
 </body>
 </html>
