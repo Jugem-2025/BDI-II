@@ -1,192 +1,407 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>メモ帳</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>体調管理チェックリスト</title>
   <style>
-    /* ベースレイアウト */
-    body {
+    /* リセット＆ベース */
+    * { box-sizing: border-box; margin:0; padding:0; }
+    body { font-family: sans-serif; line-height:1.6; padding-bottom:120px; }
+    h1 { text-align:center; padding:16px 0; }
+
+    /* コンテナ */
+    #questions-container { max-width:600px; margin:0 auto; padding:0 16px; }
+
+    /* カード形式 */
+    .card {
+      border:1px solid #ccc;
+      border-radius:6px;
+      padding:12px;
+      margin:8px 0;
+    }
+    .card h2 {
+      font-size:1rem;
+      margin-bottom:8px;
+    }
+    .options {
+      list-style:none;
+    }
+    .options li {
+      margin:4px 0;
+    }
+    .options input { margin-right:8px; }
+
+    /* 固定フッター */
+    #footer {
+      position: fixed;
+      left:0; right:0; bottom:0;
+      background:#fff; border-top:1px solid #ddd;
+      padding:8px 16px;
       display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      margin: 0;
-      font-family: Arial, sans-serif;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      z-index:100;
     }
-
-    header {
-      background-color: #333;
-      color: #fff;
-      padding: 1rem;
-      text-align: center;
-    }
-
-    main {
-      flex: 1;
-      padding: 1rem;
-    }
-
-    /* 入力エリア */
-    #memo-input {
-      width: 100%;
-      height: 12rem;
-      padding: 0.5rem;
-      font-size: 1rem;
-      box-sizing: border-box;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      resize: vertical;
-      margin-bottom: 1rem;
-    }
-
-    /* メモ一覧 */
-    #memo-list {
-      margin-top: 2rem;
-    }
-
-    #memo-list h2 {
-      margin-bottom: 0.5rem;
-    }
-
-    #memo-list ul {
-      list-style: none;
-      padding: 0;
-    }
-
-    #memo-list li {
-      padding: 0.75rem;
-      border-bottom: 1px solid #eee;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    /* フッター＋ボタン類 */
-    footer {
-      background-color: #f8f9fa;
-      padding: 1rem;
-      text-align: center;
-    }
-
-    #footer a.link-button,
     #footer button {
-      display: inline-block;
-      padding: 8px 16px;
-      font-size: 1rem;
-      margin-right: 8px;
-      border: none;
-      background-color: #17a2b8;
-      color: #fff;
-      border-radius: 4px;
-      text-decoration: none;
+      padding:8px 16px;
+      font-size:1rem;
+      margin-right:8px;
+      border:none;
+      background:#007bff;
+      color:#fff;
+      border-radius:4px;
+      cursor:pointer;
+    }
+    #footer button:last-child { background:#6c757d; }
+    #total-container {
       cursor: pointer;
+      font-weight: bold;
+      margin-top:8px;
+      width:100%;
+    }
+    #breakdown {
+      width:100%;
+      margin-top:8px;
+      display:none;
+    }
+    #breakdown ul {
+      list-style:none;
+      padding-left:0;
+    }
+    #breakdown li {
+      margin:2px 0;
     }
 
-    #footer a.link-button:hover,
-    #footer button:hover {
-      background-color: #138496;
-    }
-
-    #footer a.link-button:focus,
-    #footer button:focus {
-      outline: 2px solid #005f6b;
-      outline-offset: 2px;
+    /* モバイル対応 */
+    @media (max-width:600px) {
+      #footer { font-size:0.9rem; }
+      #footer button { flex:1 1 auto; margin-bottom:4px; }
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>メモ帳</h1>
-  </header>
+  <h1>体調管理チェックリスト</h1>
+  <div id="questions-container"></div>
 
-  <main>
-    <!-- メモ入力 -->
-    <textarea
-      id="memo-input"
-      placeholder="ここにメモを入力してください…"
-      aria-label="メモ入力エリア"
-    ></textarea>
-
-    <!-- 保存済みメモ一覧 -->
-    <section id="memo-list">
-      <h2>メモ一覧</h2>
-      <ul id="memos-ul"></ul>
-    </section>
-  </main>
-
-  <footer id="footer">
+  <div id="footer">
     <div>
-      <!-- ここで履歴ページへのリンクを追加 -->
-      <a href="history.html" class="link-button" aria-label="保存履歴を見る">
-        履歴を見る
-      </a>
-      <button id="save-btn" type="button">保存</button>
-      <button id="clear-btn" type="button">クリア</button>
+      <button id="save-btn">保存</button>
+      <button id="clear-btn">クリア</button>
     </div>
-  </footer>
+    <div id="total-container">
+      合計スコア：<span id="total-score">0</span>点
+    </div>
+    <div id="breakdown">
+      <ul id="breakdown-list"></ul>
+    </div>
+  </div>
 
   <script>
-    // 要素取得
-    const inputEl = document.getElementById('memo-input');
-    const saveBtn = document.getElementById('save-btn');
-    const clearBtn = document.getElementById('clear-btn');
-    const memosUl = document.getElementById('memos-ul');
+    // --- 質問定義（21問） ---
+    const questions = [
+      {
+        id:1, title:'悲しさ',
+        options:[
+          { text:'気が滅入っていない', value:0 },
+          { text:'しばしば気が滅入る', value:1 },
+          { text:'いつも気が滅入っている', value:2 },
+          { text:'とても気が滅入ってつらくて耐え難い', value:3 }
+        ]
+      },
+      {
+        id:2, title:'悲観',
+        options:[
+          { text:'将来について悲観していない', value:0 },
+          { text:'以前よりも将来について悲観的に感じる', value:1 },
+          { text:'物事が自分にとってうまくいくとは思えない', value:2 },
+          { text:'将来は絶望的で悪くなるばかりだと思う', value:3 }
+        ]
+      },
+      {
+        id:3, title:'過去の失敗',
+        options:[
+          { text:'自分を落伍者だとは思わない', value:0 },
+          { text:'普通の人より失敗が多かったと思う', value:1 },
+          { text:'人生を振り返ると失敗ばかりを思い出す', value:2 },
+          { text:'自分は人間として完全な落伍者だと思う', value:3 }
+        ]
+      },
+      {
+        id:4, title:'喜びの喪失',
+        options:[
+          { text:'自分が楽しいことには以前と同じくらい喜びを感じる', value:0 },
+          { text:'以前ほど物事を楽しめない', value:1 },
+          { text:'以前は楽しめたことにもほとんど喜びを感じなくなった', value:2 },
+          { text:'以前は楽しめたことにも全く喜びを感じなくなった', value:3 }
+        ]
+      },
+      {
+        id:5, title:'罪責感',
+        options:[
+          { text:'特に罪の意識はない', value:0 },
+          { text:'自分のしたことやすべきだったことに多くの罪悪感を感じる', value:1 },
+          { text:'ほとんど罪悪感を感じている', value:2 },
+          { text:'絶えず罪悪感を感じている', value:3 }
+        ]
+      },
+      {
+        id:6, title:'被罰感',
+        options:[
+          { text:'自分が罰を受けているようには感じない', value:0 },
+          { text:'自分は罰を受けるかもしれないと思う', value:1 },
+          { text:'自分は罰を受けるだろう', value:2 },
+          { text:'自分は今罰されていると感じる', value:3 }
+        ]
+      },
+      {
+        id:7, title:'自己嫌悪',
+        options:[
+          { text:'自分自身に対する意識は以前と変わらない', value:0 },
+          { text:'自分自身に対して自信を無くした', value:1 },
+          { text:'自分自身に失望している', value:2 },
+          { text:'自分自身が嫌でたまらない', value:3 }
+        ]
+      },
+      {
+        id:8, title:'自己批判',
+        options:[
+          { text:'以前よりも自分自身に批判的ということはない', value:0 },
+          { text:'以前より自分自身に批判的だ', value:1 },
+          { text:'あらゆる自分の欠点が気になり自分を責めている', value:2 },
+          { text:'何か悪いことが起こると、すべて自分のせいだと思う', value:3 }
+        ]
+      },
+      {
+        id:9, title:'自殺念慮',
+        options:[
+          { text:'自殺したいと思うことは全くない', value:0 },
+          { text:'自殺したいと思うことはあるが、本当にしようとは思わない', value:1 },
+          { text:'自殺したいと思う', value:2 },
+          { text:'機会があれば自殺するだろう', value:3 }
+        ]
+      },
+      {
+        id:10, title:'落涙',
+        options:[
+          { text:'以前よりも涙もろいということはない', value:0 },
+          { text:'以前より涙もろい', value:1 },
+          { text:'どんなささいなことにも涙が出る', value:2 },
+          { text:'泣きたいと感じるのに涙が出ない', value:3 }
+        ]
+      },
+      {
+        id:11, title:'激越',
+        options:[
+          { text:'普段より落ち着いていて緊張しにくい', value:0 },
+          { text:'ときおり落ち着きがなかったり緊張しやすい', value:1 },
+          { text:'気持ちが落ち着かずじっとしているのが難しい', value:2 },
+          { text:'気持ちが落ち着かず絶えず動いたり何かしていないと気が済まない', value:3 }
+        ]
+      },
+      {
+        id:12, title:'興味喪失',
+        options:[
+          { text:'ほかの人や活動に対する関心を失ってはいない', value:0 },
+          { text:'以前よりほかの人や物事に対する関心が減った', value:1 },
+          { text:'他の人や物事への関心がほとんどなくなった', value:2 },
+          { text:'何事にも興味を持つことが難しい', value:3 }
+        ]
+      },
+      {
+        id:13, title:'決断力低下',
+        options:[
+          { text:'以前と同じように物事を決断できる', value:0 },
+          { text:'以前より決断するのが難しくなった', value:1 },
+          { text:'以前より決断するのがずっと難しくなった', value:2 },
+          { text:'どんなことを決めるにもひどく苦労する', value:3 }
+        ]
+      },
+      {
+        id:14, title:'無価値感',
+        options:[
+          { text:'自分に価値がないとは思わない', value:0 },
+          { text:'以前ほど自分に価値があり人の役に立てる人間だとは思えない', value:1 },
+          { text:'ほかの人に比べて自分は価値がないと思う', value:2 },
+          { text:'自分は全く価値がないと思う', value:3 }
+        ]
+      },
+      {
+        id:15, title:'活力喪失',
+        options:[
+          { text:'以前と同じように活力がある', value:0 },
+          { text:'以前と比べて活力が減った', value:1 },
+          { text:'活力が足りなくて十分動けない', value:2 },
+          { text:'活力がなく何もできない', value:3 }
+        ]
+      },
+      {
+        id:16, title:'睡眠習慣の変化',
+        options:[
+          { text:'睡眠習慣に変わりはない', value:0 },
+          { text:'以前より少し睡眠時間が長い/短い', value:1 },
+          { text:'以前よりかなり睡眠時間が長い/短い', value:2 },
+          { text:'ほとんど1日中寝ている/以前より1～2時間早く目が覚めて再び眠れない', value:3 }
+        ]
+      },
+      {
+        id:17, title:'易刺激性',
+        options:[
+          { text:'普段よりイライラしやすいわけではない', value:0 },
+          { text:'普段よりイライラしやすい', value:1 },
+          { text:'普段よりかなりイライラしやすい', value:2 },
+          { text:'いつもイライラしやすい', value:3 }
+        ]
+      },
+      {
+        id:18, title:'食欲の変化',
+        options:[
+          { text:'食欲は以前と変わらない', value:0 },
+          { text:'以前より少し食欲が落ちた/増えた', value:1 },
+          { text:'以前よりかなり食欲が落ちた/増えた', value:2 },
+          { text:'まったく食欲がなくなった/いつも何か食べたくてたまらない', value:3 }
+        ]
+      },
+      {
+        id:19, title:'集中困難',
+        options:[
+          { text:'以前と同じように集中できる', value:0 },
+          { text:'以前ほどは集中できない', value:1 },
+          { text:'何事にも長い間集中することは難しい', value:2 },
+          { text:'何事にも集中できない', value:3 }
+        ]
+      },
+      {
+        id:20, title:'疲労感',
+        options:[
+          { text:'以前と比べて疲れやすいわけではない', value:0 },
+          { text:'以前より疲れやすい', value:1 },
+          { text:'以前ならできた多くのことが疲れてしまってできない', value:2 },
+          { text:'以前ならできたほとんどのことが疲れてしまってできない', value:3 }
+        ]
+      },
+      {
+        id:21, title:'性欲減退',
+        options:[
+          { text:'性欲は以前と変わらない', value:0 },
+          { text:'以前ほど性欲がない', value:1 },
+          { text:'最近めっきり性欲が減退した', value:2 },
+          { text:'まったく性欲がなくなった', value:3 }
+        ]
+      }
+    ];
 
-    // ローカルストレージからメモを読み込み、画面に描画
-    function renderMemos() {
-      const memos = JSON.parse(localStorage.getItem('memos')) || [];
-      memosUl.innerHTML = '';
+    // --- 初期化 ---
+    window.addEventListener('DOMContentLoaded', () => {
+      const container = document.getElementById('questions-container');
 
-      memos.forEach(({ time, text }) => {
+      // 質問UI を生成
+      questions.forEach(q => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        const h2 = document.createElement('h2');
+        h2.textContent = `${q.id}. ${q.title}`;
+        card.appendChild(h2);
+
+        const ul = document.createElement('ul');
+        ul.className = 'options';
+
+        q.options.forEach(opt => {
+          const li = document.createElement('li');
+          const input = document.createElement('input');
+          input.type = 'radio';
+          input.name = `q${q.id}`;
+          input.id = `q${q.id}_opt${opt.value}`;
+          input.value = opt.value;
+          input.addEventListener('change', updateTotal);
+
+          const label = document.createElement('label');
+          label.htmlFor = input.id;
+          label.textContent = opt.text;
+
+          li.appendChild(input);
+          li.appendChild(label);
+          ul.appendChild(li);
+        });
+
+        card.appendChild(ul);
+        container.appendChild(card);
+      });
+
+      // イベント
+      document.getElementById('total-container').addEventListener('click', toggleBreakdown);
+      document.getElementById('save-btn').addEventListener('click', saveRecord);
+      document.getElementById('clear-btn').addEventListener('click', clearAll);
+      updateTotal();
+    });
+
+    // --- 合計更新＆内訳描画 ---
+    function updateTotal() {
+      const totalSpan = document.getElementById('total-score');
+      let sum = 0;
+      const answers = [];
+
+      questions.forEach(q => {
+        const els = document.getElementsByName(`q${q.id}`);
+        let sel = null;
+        for (let el of els) {
+          if (el.checked) {
+            sel = parseInt(el.value,10);
+            break;
+          }
+        }
+        if (sel !== null) sum += sel;
+        answers.push(sel);
+      });
+
+      totalSpan.textContent = sum;
+      renderBreakdown(answers);
+    }
+
+    function renderBreakdown(answers) {
+      const ul = document.getElementById('breakdown-list');
+      ul.innerHTML = '';
+      answers.forEach((v, idx) => {
         const li = document.createElement('li');
-        li.textContent = `${time} — ${text}`;
-        memosUl.appendChild(li);
+        li.textContent = `${idx+1}: ${v===null? '未選択' : v}`;
+        ul.appendChild(li);
       });
     }
 
-    // 日時文字列を「YYYY-MM-DD hh:mm」形式で返す
-    function getFormattedNow() {
-      const d = new Date();
-      const pad = (n) => n.toString().padStart(2, '0');
-      return (
-        d.getFullYear() +
-        '-' +
-        pad(d.getMonth() + 1) +
-        '-' +
-        pad(d.getDate()) +
-        ' ' +
-        pad(d.getHours()) +
-        ':' +
-        pad(d.getMinutes())
-      );
+    function toggleBreakdown() {
+      const box = document.getElementById('breakdown');
+      box.style.display = box.style.display === 'none' ? 'block' : 'none';
     }
 
-    // 保存ボタン押下
-    saveBtn.addEventListener('click', () => {
-      const text = inputEl.value.trim();
-      if (!text) {
-        alert('メモが空です。何か入力してください。');
-        inputEl.focus();
-        return;
-      }
+    // --- 保存・クリア ---
+    function saveRecord() {
+      const records = JSON.parse(localStorage.getItem('healthRecords') || '[]');
+      const now = new Date().toLocaleString();
+      const total = parseInt(document.getElementById('total-score').textContent,10);
 
-      const memos = JSON.parse(localStorage.getItem('memos')) || [];
-      memos.push({ time: getFormattedNow(), text });
-      localStorage.setItem('memos', JSON.stringify(memos));
+      const answers = questions.map(q => {
+        const els = document.getElementsByName(`q${q.id}`);
+        for (let el of els) {
+          if (el.checked) return parseInt(el.value,10);
+        }
+        return null;
+      });
 
-      inputEl.value = '';
-      renderMemos();
-    });
+      records.push({ datetime: now, total, answers });
+      localStorage.setItem('healthRecords', JSON.stringify(records));
+      alert('記録を保存しました');
+    }
 
-    // クリアボタン押下
-    clearBtn.addEventListener('click', () => {
-      if (confirm('全てのメモを削除します。よろしいですか？')) {
-        localStorage.removeItem('memos');
-        renderMemos();
-      }
-    });
-
-    // ページロード時に一覧表示
-    document.addEventListener('DOMContentLoaded', renderMemos);
+    function clearAll() {
+      questions.forEach(q => {
+        const els = document.getElementsByName(`q${q.id}`);
+        els.forEach(el => el.checked = false);
+      });
+      updateTotal();
+      document.getElementById('breakdown').style.display = 'none';
+    }
   </script>
 </body>
 </html>
