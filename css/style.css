@@ -73,3 +73,20 @@ button:hover {
   padding: 0.4em 0;
   border-bottom: 1px dashed #ddd;
 }
+
+<style>
+  /* 既存のCSSに追加 */
+  #footer a.link-button {
+    display:inline-block;
+    padding:8px 16px;
+    font-size:1rem;
+    margin-right:8px;
+    border:none;
+    background:#17a2b8;
+    color:#fff;
+    border-radius:4px;
+    text-decoration:none;
+    cursor:pointer;
+  }
+  #footer a.link-button:focus { outline: 2px solid #005f6b; outline-offset: 2px; }
+</style>
